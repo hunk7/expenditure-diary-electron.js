@@ -1,0 +1,54 @@
+<html>
+<head>
+	<title>Updated price</title>
+	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+</head>
+<body>
+<br>
+<h1 class="text-muted text-center">Set Target</h1><br>
+	<div class="container">
+		<div class="row">
+		  <div class="col-sm-12">
+		    <div class="card">
+		      <div class="card-body">
+		        <form>
+					<div class="align-center">
+						<label for="item">Get Notification on the targeted price</label>
+						<input type="text" id="notifyval" placeholder="update price" autofocus>
+					</div><br>
+					<button class="btn btn-dark align-center" id="updateBtn">Update</button>
+					<button class="btn btn-dark align-center" id="closeBtn">Close</button>
+				</form>
+		      </div>
+		    </div>
+		  </div>
+		</div>
+	</div>
+
+	<script>
+		const electron = require('electron');
+		const ipc = electron.ipcRenderer;
+		const remote = electron.remote;
+
+		// close button
+		const closeBtn = document.getElementById('closeBtn');
+		closeBtn.addEventListener('click', function(event) {
+			var window = remote.getCurrentWindow();
+			window.close();
+		})
+
+
+		// Update price
+		const updateBtn = document.getElementById('updateBtn');
+		updateBtn.addEventListener('click', function() {
+			ipc.send('update-notify-value', document.getElementById('notifyval').value);
+			var window = remote.getCurrentWindow();
+			window.close();
+		})
+
+	</script>
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+</body>
+</html>

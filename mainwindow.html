@@ -1,0 +1,172 @@
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+	<title>Notes</title>
+	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+</head>
+<body style="-webkit-app-region: drag">
+	<br>
+	<h1 class="text-muted text-center">Expenditure Diary</h1><br>
+	<div class="container">
+		<div class="row">
+		  <div class="col-sm-4">
+		    <div class="card">
+		      <div class="card-body">
+		        <h5 class="card-title">BTC Price</h5>
+		        <h6 class="card-text" id="price">$0000</h6>
+		        <a href="#" class="btn btn-primary">Reload Price</a>
+		      </div>
+		    </div>
+		  </div>
+		  <div class="col-sm-4">
+		    <div class="card">
+		      <div class="card-body">
+		        <h5 class="card-title">Your Target</h5>
+		        <h6 class="card-text" id="targetPrice">$0000</h6>
+		        <a href="#" class="btn btn-primary" id="notifyBtn">Set Target</a>
+		      </div>
+		    </div>
+		  </div>
+		  <div class="col-sm-4">
+		    <div class="card">
+		      <div class="card-body">
+		        <h5 class="card-title">Your Wallet</h5>
+		        <h6 class="card-text" id="walletamount">$0000</h6>
+		        <a href="#" class="btn btn-primary" id="amountBtn">Update Amount</a>
+		      </div>
+		    </div>
+		  </div>
+		</div>
+	</div><br>
+	<h6 class="text-muted text-center"><kbd>Ctrl + N</kbd> for New Note & Double Click on Notes to Delete Them !</h6><br>
+	<h3 class="text-muted text-center">Added Notes</h3><br>
+	<div class="container">
+		<ul></ul>
+	</div>
+</body>
+<script>
+	const electron = require('electron');
+	const path = require('path');
+	const BrowserWindow = electron.remote.BrowserWindow
+	const {ipcRenderer} = electron;
+	const ipc = electron.ipcRenderer;
+	const axios = require('axios');
+
+	// Notify me 
+	const notifyBtn = document.getElementById('notifyBtn');
+	const amountBtn = document.getElementById('amountBtn');
+	var price = document.querySelector('h6');
+	var targetPrice = document.getElementById('targetPrice');
+	var walletAmount = document.getElementById('walletamount');
+	const ul = document.querySelector('ul');
+	var targetPriceVal , targetPriceAmount;
+
+	const notification = {
+		title: 'BTC Alert',
+		body: 'BitCon at your Target Price!'
+		/*icon: path.join(__dirname,'../images/icon.png')*/
+	}
+
+	function getBTC() {
+		axios.get('https://min-api.cryptocompare.com/data/pricemulti?fsyms=BTC&tsyms=USD')
+		.then(res => {
+			const cryptos = res.data.BTC.USD
+			console.log(cryptos);
+			price.innerHTML = '$'+cryptos.toLocaleString('en')
+
+			if(targetPrice != '' && targetPriceVal < cryptos) {
+				const myNotification = new window.Notification(notification.title, notification)
+			}
+		})
+	}
+	getBTC()
+	setInterval(getBTC,15000);
+	// 1000 means 1 sec
+
+	notifyBtn.addEventListener('click', function (event) {
+		const modalPath = path.join('file://',__dirname,'target.html');
+		let win = new BrowserWindow({
+			frame: false,
+			/*transparent: true,*/
+			alwaysOnTop: true,
+			width: 400,
+			height: 300,
+			title: 'Update Target Price',
+			webPreferences: {
+				nodeIntegration: true
+			}
+		})
+		// Grabage Collection handle
+		win.on('close', function() {
+			win = null;
+		});
+		// Load 
+		win.loadURL(modalPath);
+		win.show();
+	})
+
+	amountBtn.addEventListener('click', function (event) {
+		const modalPath = path.join('file://',__dirname,'amount.html');
+		let win = new BrowserWindow({
+			frame: false,
+			/*transparent: true,*/
+			alwaysOnTop: true,
+			width: 400,
+			height: 300,
+			title: 'Update Amount Price',
+			webPreferences: {
+				nodeIntegration: true
+			}
+		})
+		// Grabage Collection handle
+		win.on('close', function() {
+			win = null;
+		});
+		// Load 
+		win.loadURL(modalPath);
+		win.show();
+	})
+
+	// Add item
+	ipcRenderer.on('item:add', function(e, item) {
+		ul.className = 'list-group';
+		const li = document.createElement('li');
+		li.className = 'list-group-item';
+		const itemText = document.createTextNode(item);
+		li.appendChild(itemText);
+		ul.appendChild(li);
+	});
+
+	// Clear items
+	ipcRenderer.on('item:clear', function() {
+		ul.innerHTML = '';
+		if (ul.children.length == 0) {
+			ul.className = '';
+		}
+	});
+
+	// Remove items
+	ul.addEventListener('dblclick',removeItem);
+
+	function removeItem(e) {
+		e.target.remove();
+		if (ul.children.length == 0) {
+			ul.className = '';
+		}
+	}
+
+	ipc.on('targetPriceVal', function (event, arg) {
+		targetPriceVal = Number(arg)
+		targetPrice.innerHTML = '$'+targetPriceVal.toLocaleString('en');
+	})
+
+	ipc.on('targetPriceAmount', function (event, arg) {
+		targetPriceAmount = Number(arg)
+		walletAmount.innerHTML = '$'+targetPriceAmount.toLocaleString('en');
+	})
+
+</script>
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+</html>
